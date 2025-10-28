@@ -1,0 +1,76 @@
+# Lean4 Delethink 数据准备配置文件
+
+# 数据集配置
+dataset:
+  name: "cat-searcher/minif2f-lean4"  # HuggingFace数据集
+  splits: ["valid", "test"]             # 使用的数据分割
+  cache_dir: "./data/raw"               # 数据缓存目录
+
+# 证明切分配置
+chunking:
+  strategy: "line_based"  # 切分策略: "line_based" | "syntax_based" | "token_based"
+
+  # 按行切分参数
+  line_based:
+    target_chunks: 3           # 目标切分块数
+    min_lines_per_chunk: 5     # 每块最少行数
+    max_lines_per_chunk: 50    # 每块最多行数
+
+  # 按语法切分参数（高级）
+  syntax_based:
+    target_chunk_size: 30      # 目标每块行数
+    split_keywords:            # 切分关键词
+      - "have"
+      - "cases"
+      - "induction"
+      - "constructor"
+      - "apply"
+
+  # 按token切分参数
+  token_based:
+    tokens_per_chunk: 2048     # 每块token数
+    overlap: 100               # 重叠token数
+
+# Delethink 参数
+delethink:
+  keep_head: 100               # 保留头部token/行数
+  keep_tail: 20                # 保留尾部token/行数
+  mode: "line"                 # "line" | "token"
+
+# 训练数据构造
+training:
+  output_dir: "./data/processed"        # 输出目录
+  output_format: "jsonl"                # "jsonl" | "json"
+  train_split_ratio: 0.9                # 训练集比例
+
+  # 提示模板
+  prompt_template: |
+    You are a Lean4 theorem prover. Continue the proof based on the context.
+
+    Theorem:
+    {theorem}
+
+    Previous progress:
+    {context}
+
+    Continue the proof:
+
+  # 特殊标记
+  special_tokens:
+    proof_start: "<proof>"
+    proof_end: "</proof>"
+    chunk_sep: "<chunk>"
+    continue_tag: "<continue>"
+
+# 数据过滤
+filtering:
+  min_proof_length: 10         # 最小证明长度（行）
+  max_proof_length: 200        # 最大证明长度（行）
+  skip_empty_proofs: true      # 跳过空证明
+  skip_sorry: true             # 跳过包含sorry的证明
+
+# 统计分析
+analysis:
+  generate_stats: true         # 生成统计报告
+  plot_distributions: true     # 绘制分布图
+  sample_size: 5               # 展示样本数量
